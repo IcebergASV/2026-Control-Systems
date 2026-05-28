@@ -45,7 +45,7 @@ camera = RealSenseCamera()
 try:
     camera.start()
 except RuntimeError as e:
-    print(f"Error starting camera: {e})
+    print(f"Error starting camera: {e}")
     exit(1)
 
 for i in range(5):

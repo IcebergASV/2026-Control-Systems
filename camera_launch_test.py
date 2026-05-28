@@ -84,3 +84,15 @@ class Camera_launch:
         ld.add_action(stop_converter_on_player_exit)
 
         return ld
+
+#Function calls
+launch = Camera_launch()
+
+generate_launch = launch.generate_launch_description()
+output_folder = launch.output_folder_maker()
+recorder = launch.recorder()
+converter = launch.converter()
+player = launch.player()
+start = launch.start_player()
+stop_converter = launch.stop_converter()
+launch_action = launch.launch_action()

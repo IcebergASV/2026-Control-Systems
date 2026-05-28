@@ -1,11 +1,11 @@
 import pyrealsense2 as rs
 import numpy as np
+from keyboard import is_pressed()
 
 class RealSenseCamera:
     def __init__(self):
         self.control = rs.pipeline()
         self.config = rs.config()
-        self.frames = self.control.wait_for_frames()
 
     def start(self):
         self.control.start(self.config)
@@ -42,18 +42,24 @@ class RealSenseCamera:
         return color_data
     
 camera = RealSenseCamera()
-camera.start()
+try:
+    camera.start()
+except RuntimeError as e:
+    print(f"Error starting camera: {e})
+    exit(1)
 
 for i in range(5):
     camera.getDepthFrame()  # Buffer time for auto-exposure
     
-# Example usage:
-color_frame = camera.getColorFrame()
-depth_frame = camera.getDepthFrame()
-margins = camera.getDepthMargins(depth_frame)
+while True:
+    if is_pressed('q'): break
 
-depth_data = camera.depthDataArray(depth_frame)
-color_data = camera.colorDataArray(color_frame)
+    color_frame = camera.getColorFrame()
+    depth_frame = camera.getDepthFrame()
+    margins = camera.getDepthMargins(depth_frame)
+    
+    depth_data = camera.depthDataArray(depth_frame)
+    color_data = camera.colorDataArray(color_frame)
 
 camera.stop()
 

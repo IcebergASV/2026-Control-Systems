@@ -1,6 +1,6 @@
 import pyrealsense2 as rs
 import numpy as np
-from keyboard import is_pressed()
+from keyboard import is_pressed
 
 class RealSenseCamera:
     def __init__(self):

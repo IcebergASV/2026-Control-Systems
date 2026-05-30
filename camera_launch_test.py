@@ -7,22 +7,51 @@ from launch.substitutions import TextSubstitution, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
+
 class Camera_launch:
     def __init__(self):
+        # Path to the workspace setup 
         self.setup = TextSubstitution(text="source ~/ros2_ws/install/setup.bash && ")
-        self.execute = ExecuteProcess(cmd=[], output='screen', shell = False)
         self.perform = self.setup.perform(None)
-        self.action = self.action()
+
+        # Creates a output folder
+        self.bag_dir = self.output_folder_maker()
+
+        # Placeholders for the processes
+        self.recorder_process = None
+        self.converter_process = None
+        self.player_process = None
 
 
     def generate_launch_description(self):
         # Includes the camera driver launch so the camera node can run in the same launch 
         realsense_launch = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                PathJoinSubstitution([FindPackageShare("realsense2_camera"), "launch", "rs_launch.py"])
+                PathJoinSubstitution([
+                    FindPackageShare("realsense2_camera"),
+                    "launch",
+                    "rs_launch.py"
+                ])
             )
         )
-        return realsense_launch
+
+        # Build all actions
+        converter = self.converter()
+        recorder = self.recorder()
+        player = self.player()
+        start_player_handler = self.start_player()
+        stop_converter_handler = self.stop_converter()
+
+        # Build launch description
+        ld = LaunchDescription()
+        ld.add_action(realsense_launch)
+        ld.add_action(converter)
+        ld.add_action(recorder)
+        ld.add_action(start_player_handler)
+        ld.add_action(stop_converter_handler)
+
+        return ld
+
 
     def output_folder_maker(self):
         # Creates a output folder with a timestamp using datetime
@@ -30,76 +59,73 @@ class Camera_launch:
         bag_dir = f"/home/jetson/camera_recording_{timestamp}"
         return bag_dir
 
+
     def recorder(self):
         # Recorder: Will run until you manually stop it (CTRL-C in the launch terminal) <<< Important
-        recorder_cmd = self.perform() + f'ros2 bag record /camera/camera/color/image_raw /camera/camera/depth/image_rect_raw -o {self.output_folder_maker()}'
-        recorder = ExecuteProcess(
-            cmd=['bash', '-lc', recorder_cmd],
-            output='screen',
-            shell=False
+        recorder_cmd = (
+            self.perform +
+            f"ros2 bag record /camera/camera/color/image_raw "
+            f"/camera/camera/depth/image_rect_raw -o {self.bag_dir}"
         )
-        return recorder
+
+        self.recorder_process = ExecuteProcess(
+            cmd=['bash', '-lc', recorder_cmd],
+            output='screen'
+        )
+        return self.recorder_process
+
 
     def converter(self):
         # Converter: Will start immediately and let it watch for playback/frames
-        converter_cmd = self.perform() + 'python3 ~/convert_bag_to_video.py'
-        converter = self.execute(
+        converter_cmd = self.perform + "python3 ~/convert_bag_to_video.py"
+
+        self.converter_process = ExecuteProcess(
             cmd=['bash', '-lc', converter_cmd],
-            output='screen',
-            shell=False
+            output='screen'
         )
-        return converter
+        return self.converter_process
+
 
     def player(self):
         # Player: Will be launched when recorder exits (After you stop recording)
-        player_cmd = self.perform() + f'ros2 bag play {self.output_folder_maker()}'
-        player = self.execute(
+        player_cmd = self.perform + f"ros2 bag play {self.bag_dir}"
+
+        self.player_process = ExecuteProcess(
             cmd=['bash', '-lc', player_cmd],
-            output='screen',
-            shell=False
+            output='screen'
         )
-        return player
+        return self.player_process
+
 
     def start_player(self):
         # When the recorder exits, start the player
-        start_player_on_recorder_exit = RegisterEventHandler(
+        return RegisterEventHandler(
             OnProcessExit(
-                target_action= recorder,
-                on_exit=[LogInfo(msg=['Recorder exited, starting playback...']), player]
+                target_action=self.recorder_process,
+                on_exit=[
+                    LogInfo(msg=['Recorder exited, starting playback...']),
+                    self.player_process
+                ]
             )
         )
-        return start_player_on_recorder_exit
-        
+
+
     def stop_converter(self):
         # When the player exits, stop the converter (Uses pkill)
-        stop_converter_on_player_exit = RegisterEventHandler(
+        return RegisterEventHandler(
             OnProcessExit(
-                target_action= player,
-                on_exit=[LogInfo(msg=['Playback finished, stopping converter...']),
-                        ExecuteProcess(cmd=['bash', '-lc', 'pkill -f convert_bag_to_video.py || true'], output='screen')]
+                target_action = self.player_process,
+                on_exit = [
+                    LogInfo(msg = ['Playback finished, stopping converter...']),
+                    ExecuteProcess(
+                        cmd=['bash', '-lc', 'pkill -f convert_bag_to_video.py || true'],
+                        output='screen'
+                    )
+                ]
             )
         )
-        return stop_converter_on_player_exit
-
-
-def launch_action():
-    ld = LaunchDescription()
-    ld.add_action(realsense_launch)
-    ld.add_action(converter)
-    ld.add_action(recorder)
-    ld.add_action(start_player_on_recorder_exit)
-    ld.add_action(stop_converter_on_player_exit)
-
-    return ld
-
-#Function calls
-launch = Camera_launch()
-
-generate_launch = launch.generate_launch_description()
-output_folder = launch.output_folder_maker()
-recorder = launch.recorder()
-converter = launch.converter()
-player = launch.player()
-start = launch.start_player()
-stop_converter = launch.stop_converter()
-launch_action = launch.launch_action()
+    
+# Launchs the program
+def generate_launch_description():
+    launch = Camera_launch()
+    return launch.generate_launch_description()

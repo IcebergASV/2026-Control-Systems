@@ -38,16 +38,21 @@ class RealSenseCamera:
         margins = (depth_frame.get_width(), depth_frame.get_height())
         return depth_frame, margins
     
-    def depthDataArray(self):
-        depth_data = np.asanyarray(self.getDepthFrame()[0].get_data())
-        return depth_data
+    def depthDataArray(self, array):
+        depth_data = self.getDepthFrame()[0].get_data()
+        depth_array = np.append(array, depth_data)
+        return depth_array
     
-    def colorDataArray(self):
-        color_data = np.asanyarray(self.getColorFrame()[0].get_data())
-        return color_data
+    def colorDataArray(self, array):
+        color_data = self.getColorFrame()[0].get_data()
+        color_array = np.append(array, color_data)
+        return color_array
 
 controlThread = th.Thread(target=quitThread, daemon=True)
 controlThread.start()
+
+depth_array = np.array([])
+color_array = np.array([])
 
 camera = RealSenseCamera()
 try:
@@ -62,16 +67,19 @@ for i in range(5):
 
 try:
     while running:
+        print("Gathering data...")
+        
         color_frame = camera.getColorFrame()
         depth_frame = camera.getDepthFrame()
-        margins = camera.getDepthMargins(depth_frame)
         
-        depth_data = camera.depthDataArray(depth_frame)
-        color_data = camera.colorDataArray(color_frame)
+        depth_array = camera.depthDataArray(depth_array)
+        color_array = camera.colorDataArray(color_array)
 
 except KeyboardInterrupt:
+    pass
+
+finally:
     camera.stop()
-    exit(1)
 
 
 

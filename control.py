@@ -12,12 +12,13 @@ def quitThread():
         key_input = rc.readkey()
         if key_input == 'q':
             running = False
-        self.frames = self.control.wait_for_frames()
+        
 
 class RealSenseCamera:
     def __init__(self):
         self.control = rs.pipeline()
         self.config = rs.config()
+        self.frames = self.control.wait_for_frames()
 
     def start(self):
         self.control.start(self.config)

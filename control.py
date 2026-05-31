@@ -18,7 +18,6 @@ class RealSenseCamera:
     def __init__(self):
         self.control = rs.pipeline()
         self.config = rs.config()
-        self.frames = self.control.wait_for_frames()
 
     def start(self):
         self.control.start(self.config)
@@ -29,12 +28,14 @@ class RealSenseCamera:
         print("Camera stopped.")
 
     def getColorFrame(self):
-        color_frame = self.frames.get_color_frame()
+        frames = self.control.wait_for_frames()
+        color_frame = frames.get_color_frame()
         margins = (color_frame.get_width(), color_frame.get_height())
         return color_frame, margins
     
     def getDepthFrame(self):
-        depth_frame = self.frames.get_depth_frame()
+        frames = self.control.wait_for_frames()
+        depth_frame = frames.get_depth_frame()
         margins = (depth_frame.get_width(), depth_frame.get_height())
         return depth_frame, margins
     

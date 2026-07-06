@@ -48,39 +48,40 @@ class RealSenseCamera:
         color_data = self.getColorFrame()[0].get_data()
         color_array = np.append(array, color_data)
         return color_array
-
-controlThread = th.Thread(target=quitThread, daemon=True)
-controlThread.start()
-
-depth_array = np.array([])
-color_array = np.array([])
-
-camera = RealSenseCamera()
-try:
-    camera.start()
+def main():
+        global running
+    controlThread = th.Thread(target=quitThread, daemon=True)
+    controlThread.start()
     
-except RuntimeError as e:
-    print(f"Error starting camera: {e}")
-    exit(1)
-
-for i in range(5):
-    camera.getDepthFrame()  # Buffer time for auto-exposure
-
-try:
-    while running:
-        print("Gathering data...")
+    depth_array = np.array([])
+    color_array = np.array([])
+    
+    camera = RealSenseCamera()
+    try:
+        camera.start()
         
-        color_frame = camera.getColorFrame()
-        depth_frame = camera.getDepthFrame()
-        
-        depth_array = camera.depthDataArray(depth_array)
-        color_array = camera.colorDataArray(color_array)
+    except RuntimeError as e:
+        print(f"Error starting camera: {e}")
+        exit(1)
+    
+    for i in range(5):
+        camera.getDepthFrame()  # Buffer time for auto-exposure
+    
+    try:
+        while running:
+            print("Gathering data...")
+            
+            color_frame = camera.getColorFrame()
+            depth_frame = camera.getDepthFrame()
+            
+            depth_array = camera.depthDataArray(depth_array)
+            color_array = camera.colorDataArray(color_array)
+    
+    except KeyboardInterrupt:
+        pass
+    
+    finally:
+        camera.stop()
 
-except KeyboardInterrupt:
-    pass
-
-finally:
-    camera.stop()
-
-
-
+if __name__ == "__main__":
+    main()

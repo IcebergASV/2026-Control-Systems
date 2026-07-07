@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from datetime import datetime
+import time
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, RegisterEventHandler, LogInfo, IncludeLaunchDescription
 from launch.event_handlers import OnProcessExit
@@ -54,10 +54,10 @@ class Camera_launch:
 
 
     def output_folder_maker(self):
-        # Creates a output folder with a timestamp using datetime
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        bag_dir = f"/home/jetson/camera_recording_{timestamp}"
-        return bag_dir
+        # Creates a output folder with a timestamp using time 
+        # When it ends the timestamp will be for however long the Jetson was running for in seconds
+        timestamp = int(time.monotonic())
+        return f"/home/jetson/camera_recording_{timestamp}"
 
 
     def recorder(self):

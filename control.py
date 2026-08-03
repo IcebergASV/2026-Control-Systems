@@ -48,6 +48,22 @@ class RealSenseCamera:
         color_data = self.getColorFrame()[0].get_data()
         color_array = np.append(array, color_data)
         return color_array
+        
+    def get_depth_at_pixel(self, x, y):
+        d_frame = self.getDepthFrame()
+
+        try:
+            if x < 0 or x >= d_frame[1][0] or y < 0 or y >= d_frame[1][1]:
+                raise ValueError("Pixel coordinates are out of bounds.")
+
+            else:
+                depth_value = float(d_frame[0].get_distance(x, y))
+                return depth_value
+            
+        except Exception as e:
+            print(f"Error occurred while fetching depth at pixel ({x}, {y}): {e}")
+            return None
+            
 def main():
         global running
     controlThread = th.Thread(target=quitThread, daemon=True)

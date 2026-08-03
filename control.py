@@ -65,7 +65,7 @@ class RealSenseCamera:
             return None
             
 def main():
-        global running
+    global running
     controlThread = th.Thread(target=quitThread, daemon=True)
     controlThread.start()
     

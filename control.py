@@ -66,7 +66,7 @@ class RealSenseCamera:
 
 class ZEDCamera:
     def __init__(self):
-            self.camera = zed.Camera()
+        self.camera = zed.Camera()
         self.init_params = zed.InitParameters()
         self.init_params.camera_resolution = zed.RESOLUTION.HD2K
         self.init_params.camera_fps = 15

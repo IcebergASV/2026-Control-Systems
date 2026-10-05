@@ -176,7 +176,7 @@ def main():
     controlThread = th.Thread(target=quitThread, daemon=True)
     controlThread.start()
 
-    choice_dict = {"1" : RSTest(), "2" : ZEDTest()}
+    choice_dict = {"1" : RSTest, "2" : ZEDTest}
     choice = input("Please choose a camera test: press 1 for Realsense and 2 for ZED")
 
     if choice in choice_dict.keys():

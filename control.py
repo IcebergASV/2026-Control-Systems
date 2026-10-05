@@ -2,6 +2,7 @@ import pyrealsense2 as rs
 import numpy as np
 import readchar as rc
 import threading as th        # built-in, no installation required
+import pyzed.sl as zed
 
 key_input = None
 running = True
